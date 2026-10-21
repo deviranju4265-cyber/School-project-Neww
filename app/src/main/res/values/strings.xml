@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">SafeLock &amp; Monitor</string>
+    <string name="safelock_student_app_name">SafeLock</string>
+    <string name="lock_monitor_parent_app_name">Lock Monitor</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="cd_google_sign_in">Sign in with Google account</string>
+    <string name="cd_safelock_logo">SafeLock Application Shield Logo</string>
+    <string name="cd_emergency_call">Emergency Call 112</string>
+    <string name="cd_wallpaper_picker">Customize Student Wallpaper</string>
+    <string name="cd_requests_sheet">Student Requests and Status</string>
+    <string name="cd_student_setup">Student Setup and Pairing ID</string>
+    <string name="cd_notifications_bell">Real-Time Cloud Notifications</string>
+    <string name="cd_copy_id">Copy Unique Identifier</string>
+    <string name="cd_lock_now">Lock Student Device Now</string>
+    <string name="cd_unlock_now">Unlock Student Device Immediately</string>
+</resources>

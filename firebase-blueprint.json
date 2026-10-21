@@ -1,0 +1,330 @@
+{
+  "entities": {
+    "ParentAccount": {
+      "title": "ParentAccount",
+      "description": "Parent account profile, unique LM-XXXXX identifier, recovery email, and salted PIN verifier for Lock Monitor.",
+      "type": "object",
+      "properties": {
+        "parentUid": {
+          "type": "string",
+          "description": "Authenticated Google user UID of the parent."
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Unique generated Parent ID (e.g., LM-P4D81)."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the parent."
+        },
+        "recoveryEmail": {
+          "type": "string",
+          "description": "Recovery email for PIN reset verification."
+        },
+        "pinHash": {
+          "type": "string",
+          "description": "Salted SHA-256 hash verifier of the parent app-access PIN."
+        },
+        "pinSalt": {
+          "type": "string",
+          "description": "Random cryptographic salt used for the PIN verifier."
+        },
+        "connectedStudentIds": {
+          "type": "array",
+          "description": "Bounded list of connected Student IDs (SL-XXXXX)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "parentUid",
+        "parentId",
+        "name",
+        "recoveryEmail",
+        "pinHash",
+        "pinSalt",
+        "connectedStudentIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Student device registration, pairing state, authorized schedules, approved apps, and real-time telemetry.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Unique Student ID (e.g., SL-A7K92) generated per installation."
+        },
+        "studentUid": {
+          "type": "string",
+          "description": "Authenticated Google user UID of the student device."
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student display name."
+        },
+        "deviceRegistrationId": {
+          "type": "string",
+          "description": "Installation-specific registration ID to detect reinstalls/phone replacements."
+        },
+        "pairedParentUid": {
+          "type": "string",
+          "description": "UID of the parent after student approves pairing (empty string when unpaired)."
+        },
+        "pairedParentId": {
+          "type": "string",
+          "description": "Parent ID (LM-XXXXX) of the paired parent."
+        },
+        "pendingParentUid": {
+          "type": "string",
+          "description": "UID of a parent requesting connection prior to student approval."
+        },
+        "pendingParentId": {
+          "type": "string",
+          "description": "Parent ID (LM-XXXXX) requesting connection."
+        },
+        "pendingParentName": {
+          "type": "string",
+          "description": "Name of the parent requesting connection."
+        },
+        "pairingStatus": {
+          "type": "string",
+          "enum": ["UNPAIRED", "PENDING_APPROVAL", "PAIRED", "REVOKED"],
+          "description": "Current parent-child pairing authorization status."
+        },
+        "connectionStatus": {
+          "type": "string",
+          "enum": ["ONLINE", "OFFLINE", "SYNC_PENDING"],
+          "description": "Device connectivity state."
+        },
+        "safeLockStatus": {
+          "type": "string",
+          "enum": ["RESTRICTED", "NORMAL_USE", "EMERGENCY_UNLOCKED", "COMMAND_PENDING"],
+          "description": "Confirmed SafeLock enforcement state on the student device."
+        },
+        "approvedApps": {
+          "type": "array",
+          "description": "Parent-authorized package names allowed during restricted mode."
+        },
+        "proposedApps": {
+          "type": "array",
+          "description": "Student-proposed package names awaiting parent approval."
+        },
+        "authorizedScheduleSlots": {
+          "type": "array",
+          "description": "Parent-authorized schedule slots formatted as DAY|START|END|LABEL."
+        },
+        "proposedScheduleSlots": {
+          "type": "array",
+          "description": "Student-proposed schedule slots awaiting parent approval."
+        },
+        "emergencyUnlockUntilMillis": {
+          "type": "integer",
+          "description": "Epoch milliseconds when active emergency unlock expires (0 if inactive)."
+        },
+        "manualOverrideState": {
+          "type": "string",
+          "enum": ["NONE", "LOCKED_NOW", "UNLOCKED_NOW"],
+          "description": "Parent manual lock/unlock override state."
+        },
+        "lastCommandId": {
+          "type": "string",
+          "description": "ID of the last remote command processed by the student device."
+        },
+        "lastCommandStatus": {
+          "type": "string",
+          "enum": ["NONE", "PENDING", "EXECUTED", "REJECTED"],
+          "description": "Execution confirmation status of the last command."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "studentId",
+        "studentUid",
+        "studentName",
+        "deviceRegistrationId",
+        "pairedParentUid",
+        "pairedParentId",
+        "pendingParentUid",
+        "pendingParentId",
+        "pendingParentName",
+        "pairingStatus",
+        "connectionStatus",
+        "safeLockStatus",
+        "approvedApps",
+        "proposedApps",
+        "authorizedScheduleSlots",
+        "proposedScheduleSlots",
+        "emergencyUnlockUntilMillis",
+        "manualOverrideState",
+        "lastCommandId",
+        "lastCommandStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudentRequest": {
+      "title": "StudentRequest",
+      "description": "Student-initiated request for app permission, schedule change, or emergency unlock.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Student ID (SL-XXXXX) submitting the request."
+        },
+        "studentUid": {
+          "type": "string",
+          "description": "Authenticated Google UID of the student."
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Name of the student."
+        },
+        "parentUid": {
+          "type": "string",
+          "description": "Authenticated Google UID of the paired parent."
+        },
+        "requestType": {
+          "type": "string",
+          "enum": ["APP_PERMISSION", "SCHEDULE_CHANGE", "EMERGENCY_UNLOCK"],
+          "description": "Type of student request."
+        },
+        "details": {
+          "type": "string",
+          "description": "Human-readable description of the request."
+        },
+        "payloadValue": {
+          "type": "string",
+          "description": "Structured value (package name, schedule slot, or requested duration)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "APPROVED", "REJECTED"],
+          "description": "Current approval status of the request."
+        },
+        "approvedDurationMinutes": {
+          "type": "integer",
+          "description": "Duration in minutes selected by parent when approving an emergency unlock."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of request submission (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last status change (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "studentId",
+        "studentUid",
+        "studentName",
+        "parentUid",
+        "requestType",
+        "details",
+        "payloadValue",
+        "status",
+        "approvedDurationMinutes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DeviceCommand": {
+      "title": "DeviceCommand",
+      "description": "Authorized remote Lock/Unlock/Emergency Unlock command sent from Lock Monitor to SafeLock.",
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "description": "Unique command identifier to prevent replay or duplicate execution."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Target Student ID (SL-XXXXX)."
+        },
+        "studentUid": {
+          "type": "string",
+          "description": "Target student's Google UID."
+        },
+        "parentUid": {
+          "type": "string",
+          "description": "Issuing parent's Google UID."
+        },
+        "commandType": {
+          "type": "string",
+          "enum": ["LOCK_NOW", "UNLOCK_NOW", "EMERGENCY_UNLOCK", "SYNC_POLICY"],
+          "description": "Type of remote command."
+        },
+        "durationMinutes": {
+          "type": "integer",
+          "description": "Optional duration in minutes (0 for immediate lock/unlock)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "EXECUTED", "FAILED"],
+          "description": "Command execution confirmation state."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when command was issued (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when command was confirmed (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "commandId",
+        "studentId",
+        "studentUid",
+        "parentUid",
+        "commandType",
+        "durationMinutes",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/parents/{parentUid}": {
+      "schema": { "$ref": "#/entities/ParentAccount" },
+      "description": "Parent account documents keyed by authenticated parent UID."
+    },
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/StudentProfile" },
+      "description": "Student device profiles keyed by unique generated Student ID (SL-XXXXX)."
+    },
+    "/student_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/StudentRequest" },
+      "description": "Requests submitted by students to their paired parent."
+    },
+    "/device_commands/{commandId}": {
+      "schema": { "$ref": "#/entities/DeviceCommand" },
+      "description": "Remote lock/unlock commands issued by parents and confirmed by student devices."
+    }
+  }
+}

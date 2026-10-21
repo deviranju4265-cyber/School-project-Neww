@@ -1,0 +1,303 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidStringList(arr, maxItems) {
+      return arr is list && arr.size() <= maxItems && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= 200));
+    }
+
+    // 1. ParentAccount Validation Helper
+    function isValidParentAccount(data) {
+      return data.parentUid is string && data.parentUid.size() >= 1 && data.parentUid.size() <= 128 &&
+             data.parentId is string && data.parentId.size() >= 4 && data.parentId.size() <= 32 && data.parentId.matches('^LM-[A-Z0-9]+$') &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.recoveryEmail is string && data.recoveryEmail.size() >= 3 && data.recoveryEmail.size() <= 120 &&
+             data.pinHash is string && data.pinHash.size() >= 16 && data.pinHash.size() <= 128 &&
+             data.pinSalt is string && data.pinSalt.size() >= 8 && data.pinSalt.size() <= 64 &&
+             isValidStringList(data.connectedStudentIds, 20) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 2. StudentProfile Validation Helper
+    function isValidStudentProfile(data) {
+      return data.studentId is string && data.studentId.size() >= 4 && data.studentId.size() <= 32 && data.studentId.matches('^SL-[A-Z0-9]+$') &&
+             data.studentUid is string && data.studentUid.size() >= 1 && data.studentUid.size() <= 128 &&
+             data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 80 &&
+             data.deviceRegistrationId is string && data.deviceRegistrationId.size() >= 1 && data.deviceRegistrationId.size() <= 128 &&
+             data.pairedParentUid is string && data.pairedParentUid.size() <= 128 &&
+             data.pairedParentId is string && data.pairedParentId.size() <= 32 &&
+             data.pendingParentUid is string && data.pendingParentUid.size() <= 128 &&
+             data.pendingParentId is string && data.pendingParentId.size() <= 32 &&
+             data.pendingParentName is string && data.pendingParentName.size() <= 80 &&
+             data.pairingStatus is string && data.pairingStatus.size() <= 32 &&
+             data.pairingStatus in ['UNPAIRED', 'PENDING_APPROVAL', 'PAIRED', 'REVOKED'] &&
+             data.connectionStatus is string && data.connectionStatus.size() <= 32 &&
+             data.connectionStatus in ['ONLINE', 'OFFLINE', 'SYNC_PENDING'] &&
+             data.safeLockStatus is string && data.safeLockStatus.size() <= 32 &&
+             data.safeLockStatus in ['RESTRICTED', 'NORMAL_USE', 'EMERGENCY_UNLOCKED', 'COMMAND_PENDING'] &&
+             isValidStringList(data.approvedApps, 50) &&
+             isValidStringList(data.proposedApps, 50) &&
+             isValidStringList(data.authorizedScheduleSlots, 30) &&
+             isValidStringList(data.proposedScheduleSlots, 30) &&
+             data.emergencyUnlockUntilMillis is int && data.emergencyUnlockUntilMillis >= 0 &&
+             data.manualOverrideState is string && data.manualOverrideState.size() <= 32 &&
+             data.manualOverrideState in ['NONE', 'LOCKED_NOW', 'UNLOCKED_NOW'] &&
+             data.lastCommandId is string && data.lastCommandId.size() <= 128 &&
+             data.lastCommandStatus is string && data.lastCommandStatus.size() <= 32 &&
+             data.lastCommandStatus in ['NONE', 'PENDING', 'EXECUTED', 'REJECTED'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 3. StudentRequest Validation Helper
+    function isValidStudentRequest(data) {
+      return data.studentId is string && data.studentId.size() >= 4 && data.studentId.size() <= 32 &&
+             data.studentUid is string && data.studentUid.size() >= 1 && data.studentUid.size() <= 128 &&
+             data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 80 &&
+             data.parentUid is string && data.parentUid.size() <= 128 &&
+             data.requestType is string && data.requestType.size() <= 32 &&
+             data.requestType in ['APP_PERMISSION', 'SCHEDULE_CHANGE', 'EMERGENCY_UNLOCK'] &&
+             data.details is string && data.details.size() >= 1 && data.details.size() <= 500 &&
+             data.payloadValue is string && data.payloadValue.size() <= 500 &&
+             data.status is string && data.status.size() <= 32 &&
+             data.status in ['PENDING', 'APPROVED', 'REJECTED'] &&
+             data.approvedDurationMinutes is int && data.approvedDurationMinutes >= 0 && data.approvedDurationMinutes <= 240 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 4. DeviceCommand Validation Helper
+    function isValidDeviceCommand(data) {
+      return data.commandId is string && data.commandId.size() >= 1 && data.commandId.size() <= 128 &&
+             data.studentId is string && data.studentId.size() >= 4 && data.studentId.size() <= 32 &&
+             data.studentUid is string && data.studentUid.size() >= 1 && data.studentUid.size() <= 128 &&
+             data.parentUid is string && data.parentUid.size() >= 1 && data.parentUid.size() <= 128 &&
+             data.commandType is string && data.commandType.size() <= 32 &&
+             data.commandType in ['LOCK_NOW', 'UNLOCK_NOW', 'EMERGENCY_UNLOCK', 'SYNC_POLICY'] &&
+             data.durationMinutes is int && data.durationMinutes >= 0 && data.durationMinutes <= 240 &&
+             data.status is string && data.status.size() <= 32 &&
+             data.status in ['PENDING', 'EXECUTED', 'FAILED'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // Collection 1: /parents/{parentUid} (Strict PII Isolation to Owner)
+    match /parents/{parentUid} {
+      allow get: if isSignedIn() && isValidId(parentUid) && request.auth.uid == parentUid;
+      allow list: if isSignedIn() && resource.data.parentUid == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(parentUid) &&
+                       request.auth.uid == parentUid &&
+                       incoming().parentUid == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'parentUid', 'parentId', 'name', 'recoveryEmail',
+                         'pinHash', 'pinSalt', 'connectedStudentIds', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'parentUid', 'parentId', 'name', 'recoveryEmail',
+                         'pinHash', 'pinSalt', 'connectedStudentIds', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidParentAccount(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(parentUid) &&
+                       isValidParentAccount(incoming()) &&
+                       request.auth.uid == parentUid &&
+                       incoming().parentUid == existing().parentUid &&
+                       incoming().parentId == existing().parentId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'recoveryEmail', 'pinHash', 'pinSalt', 'connectedStudentIds', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(parentUid) && request.auth.uid == parentUid;
+    }
+
+    // Collection 2: /students/{studentId}
+    match /students/{studentId} {
+      allow get: if isSignedIn() &&
+                    isValidId(studentId) &&
+                    (existing().studentUid == request.auth.uid ||
+                     existing().pairedParentUid == request.auth.uid ||
+                     existing().pendingParentUid == request.auth.uid ||
+                     existing().pairingStatus == 'UNPAIRED');
+
+      allow list: if isSignedIn() &&
+                     (resource.data.studentUid == request.auth.uid ||
+                      resource.data.pairedParentUid == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(studentId) &&
+                       incoming().studentId == studentId &&
+                       incoming().studentUid == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'studentId', 'studentUid', 'studentName', 'deviceRegistrationId',
+                         'pairedParentUid', 'pairedParentId', 'pendingParentUid', 'pendingParentId',
+                         'pendingParentName', 'pairingStatus', 'connectionStatus', 'safeLockStatus',
+                         'approvedApps', 'proposedApps', 'authorizedScheduleSlots', 'proposedScheduleSlots',
+                         'emergencyUnlockUntilMillis', 'manualOverrideState', 'lastCommandId',
+                         'lastCommandStatus', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'studentId', 'studentUid', 'studentName', 'deviceRegistrationId',
+                         'pairedParentUid', 'pairedParentId', 'pendingParentUid', 'pendingParentId',
+                         'pendingParentName', 'pairingStatus', 'connectionStatus', 'safeLockStatus',
+                         'approvedApps', 'proposedApps', 'authorizedScheduleSlots', 'proposedScheduleSlots',
+                         'emergencyUnlockUntilMillis', 'manualOverrideState', 'lastCommandId',
+                         'lastCommandStatus', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidStudentProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(studentId) &&
+                       isValidStudentProfile(incoming()) &&
+                       incoming().studentId == existing().studentId &&
+                       incoming().studentUid == existing().studentUid &&
+                       incoming().deviceRegistrationId == existing().deviceRegistrationId &&
+                       incoming().createdAt == existing().createdAt && (
+                         // Action 1: Student Device Owner updates status, proposals, or approves/rejects pairing
+                         (existing().studentUid == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'studentName', 'pairedParentUid', 'pairedParentId',
+                            'pendingParentUid', 'pendingParentId', 'pendingParentName',
+                            'pairingStatus', 'connectionStatus', 'safeLockStatus',
+                            'proposedApps', 'proposedScheduleSlots', 'emergencyUnlockUntilMillis',
+                            'manualOverrideState', 'lastCommandId', 'lastCommandStatus', 'updatedAt'
+                          ])) ||
+                         // Action 2: Paired Parent updates authorized policy, approvedApps, schedules, or lock state
+                         (existing().pairedParentUid == request.auth.uid &&
+                          existing().pairingStatus == 'PAIRED' &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'approvedApps', 'authorizedScheduleSlots', 'safeLockStatus',
+                            'emergencyUnlockUntilMillis', 'manualOverrideState',
+                            'lastCommandId', 'lastCommandStatus', 'pairingStatus', 'updatedAt'
+                          ])) ||
+                         // Action 3: Parent submits a pairing request to an unpaired Student ID
+                         (existing().pairingStatus == 'UNPAIRED' &&
+                          incoming().pairingStatus == 'PENDING_APPROVAL' &&
+                          incoming().pendingParentUid == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly([
+                            'pendingParentUid', 'pendingParentId', 'pendingParentName',
+                            'pairingStatus', 'updatedAt'
+                          ]))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(studentId) && existing().studentUid == request.auth.uid;
+    }
+
+    // Collection 3: /student_requests/{requestId}
+    match /student_requests/{requestId} {
+      allow get: if isSignedIn() &&
+                    isValidId(requestId) &&
+                    (existing().studentUid == request.auth.uid || existing().parentUid == request.auth.uid);
+
+      allow list: if isSignedIn() &&
+                     (resource.data.studentUid == request.auth.uid || resource.data.parentUid == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(requestId) &&
+                       incoming().studentUid == request.auth.uid &&
+                       incoming().status == 'PENDING' &&
+                       incoming().approvedDurationMinutes == 0 &&
+                       incoming().keys().hasAll([
+                         'studentId', 'studentUid', 'studentName', 'parentUid',
+                         'requestType', 'details', 'payloadValue', 'status',
+                         'approvedDurationMinutes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'studentId', 'studentUid', 'studentName', 'parentUid',
+                         'requestType', 'details', 'payloadValue', 'status',
+                         'approvedDurationMinutes', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidStudentRequest(incoming());
+
+      // Terminal State Locking: Only PENDING requests can be updated, and ONLY by the authorized parent
+      allow update: if isSignedIn() &&
+                       isValidId(requestId) &&
+                       isValidStudentRequest(incoming()) &&
+                       existing().status == 'PENDING' &&
+                       existing().parentUid == request.auth.uid &&
+                       incoming().studentId == existing().studentId &&
+                       incoming().studentUid == existing().studentUid &&
+                       incoming().parentUid == existing().parentUid &&
+                       incoming().requestType == existing().requestType &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().status in ['APPROVED', 'REJECTED'] &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'approvedDurationMinutes', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+
+    // Collection 4: /device_commands/{commandId}
+    match /device_commands/{commandId} {
+      allow get: if isSignedIn() &&
+                    isValidId(commandId) &&
+                    (existing().studentUid == request.auth.uid || existing().parentUid == request.auth.uid);
+
+      allow list: if isSignedIn() &&
+                     (resource.data.studentUid == request.auth.uid || resource.data.parentUid == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+                       isValidId(commandId) &&
+                       incoming().commandId == commandId &&
+                       incoming().parentUid == request.auth.uid &&
+                       incoming().status == 'PENDING' &&
+                       incoming().keys().hasAll([
+                         'commandId', 'studentId', 'studentUid', 'parentUid',
+                         'commandType', 'durationMinutes', 'status', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'commandId', 'studentId', 'studentUid', 'parentUid',
+                         'commandType', 'durationMinutes', 'status', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidDeviceCommand(incoming()) &&
+                       exists(/databases/$(database)/documents/students/$(incoming().studentId)) &&
+                       get(/databases/$(database)/documents/students/$(incoming().studentId)).data.pairedParentUid == request.auth.uid &&
+                       get(/databases/$(database)/documents/students/$(incoming().studentId)).data.pairingStatus == 'PAIRED';
+
+      // Terminal State Locking: Only target student device can confirm PENDING command execution
+      allow update: if isSignedIn() &&
+                       isValidId(commandId) &&
+                       isValidDeviceCommand(incoming()) &&
+                       existing().status == 'PENDING' &&
+                       existing().studentUid == request.auth.uid &&
+                       incoming().commandId == existing().commandId &&
+                       incoming().studentId == existing().studentId &&
+                       incoming().studentUid == existing().studentUid &&
+                       incoming().parentUid == existing().parentUid &&
+                       incoming().commandType == existing().commandType &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().status in ['EXECUTED', 'FAILED'] &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+  }
+}

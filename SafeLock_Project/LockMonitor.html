@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lock Monitor — Parent Control Dashboard (Prototype)</title>
+  <style>
+    :root {
+      --bg-dark: #070B14;
+      --bg-card: #111827;
+      --bg-elevated: #1E293B;
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --accent-indigo: #6366F1;
+      --accent-cyan: #06B6D4;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-rose: #F43F5E;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    .demo-banner {
+      background: #1E1B4B;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.4);
+      padding: 7px 16px;
+      font-size: 11px;
+      color: #C7D2FE;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    /* PIN Gate Overlay */
+    .pin-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, #1E1B4B 0%, #070B14 75%);
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .pin-overlay.hidden {
+      display: none;
+    }
+    .pin-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .student-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      padding-bottom: 4px;
+    }
+    .student-tab {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .student-tab.active {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: var(--accent-indigo);
+      color: var(--text-primary);
+    }
+    /* Top Dashboard Status Card (4.5) */
+    .status-hero {
+      background: linear-gradient(145deg, #111827, #1E293B);
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .metric-box {
+      background: rgba(7, 11, 20, 0.55);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 4px;
+    }
+    .metric-val {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    /* Primary Command Bar (4.6 Lock Now, 4.7 Unlock, 4.8 Separate Requests Button) */
+    .command-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .btn {
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-lock {
+      background: linear-gradient(135deg, #E11D48, #BE123C);
+      color: #fff;
+    }
+    .btn-unlock {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #fff;
+    }
+    .btn-requests {
+      background: linear-gradient(135deg, #4F46E5, #0284C7);
+      color: #fff;
+    }
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+    .dashboard-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 18px;
+    }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .app-row, .sched-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #070B14;
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.84);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: 14px;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-box {
+      width: 100%;
+      max-width: 540px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      padding: 20px;
+    }
+    .req-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1E293B;
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+      z-index: 120;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-banner">
+    <span>🛡️ <strong>Lock Monitor Prototype (Demo):</strong> Simulates parent dashboard locally. Production Android app uses Firebase Auth + Firestore.</span>
+    <div>
+      <label style="font-size:11px;cursor:pointer;">
+        <input type="checkbox" id="offlineToggle" onchange="toggleSimulatedOffline(this.checked)" />
+        Simulate Student Phone Offline
+      </label>
+    </div>
+  </div>
+
+  <!-- 4.2 & 4.3 Parent Registration & App-Access PIN Overlay -->
+  <div id="pinOverlay" class="pin-overlay">
+    <div class="pin-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div class="brand-icon">🔐</div>
+        <div>
+          <h2 style="font-size:18px;" id="authTitle">Lock Monitor PIN Access</h2>
+          <p style="font-size:12px;color:var(--text-secondary);" id="authSubtitle">Enter your parent app-access PIN</p>
+        </div>
+      </div>
+
+      <!-- Registration Fields (First-Time Setup) -->
+      <div id="registerFields" style="display:none;">
+        <input type="text" id="regParentName" class="input" placeholder="Parent Full Name (e.g., Alice Sharma)" />
+        <input type="email" id="regRecoveryEmail" class="input" placeholder="Recovery Email (e.g., alice@example.com)" />
+        <input type="password" id="regPinInput" class="input" maxlength="6" placeholder="Create 4–6 Digit App-Access PIN" />
+        <button class="btn btn-requests" style="width:100%;" onclick="completeParentRegistration()">Create Parent Account &amp; Generate ID</button>
+      </div>
+
+      <!-- PIN Unlock Fields -->
+      <div id="unlockFields">
+        <input type="password" id="pinVerifyInput" class="input" maxlength="6" placeholder="Enter PIN (Default Demo PIN: 1234)" />
+        <div id="pinErrorMsg" style="color:#FDA4AF;font-size:12px;margin-bottom:8px;display:none;"></div>
+        <button class="btn btn-requests" style="width:100%;margin-bottom:8px;" onclick="verifyParentPin()">Unlock Lock Monitor</button>
+        <button class="btn btn-secondary" style="width:100%;font-size:12px;" onclick="recoverPinWithEmail()">Forgot PIN? Recover via Registered Email</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Top Header: Parent Info & ID -->
+    <header class="header-bar">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div>
+          <h1 style="font-size:18px;font-weight:800;">Lock Monitor</h1>
+          <div style="font-size:12px;color:var(--text-secondary);">
+            Parent: <span id="parentNameLabel">Alice Sharma</span> • ID: <strong id="parentIdLabel" style="color:#67E8F9;">LM-P4D81</strong>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="padding:8px 12px;min-height:38px;" onclick="copyParentId()">Copy Parent ID</button>
+        <button class="btn btn-secondary" style="padding:8px 12px;min-height:38px;" onclick="openModal('pairStudentModal')">+ Pair Student ID</button>
+        <button class="btn btn-secondary" style="padding:8px 12px;min-height:38px;" onclick="lockParentApp()">🔒 Lock App</button>
+      </div>
+    </header>
+
+    <!-- 4.4 Multiple Students Selector -->
+    <div id="studentTabsContainer" class="student-tabs"></div>
+
+    <!-- 4.5 Dashboard Header Status Card -->
+    <section class="status-hero">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h2 id="dashStudentName" style="font-size:20px;font-weight:800;">Leo Sharma</h2>
+          <div id="dashStudentId" style="font-size:12px;color:var(--text-secondary);">Student ID: SL-A7K92 • Paired &amp; Authorized</div>
+        </div>
+        <div id="dashLastCommandBadge" style="font-size:12px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.07);">
+          Last Command: Confirmed
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="metric-box">
+          <div class="metric-label">Connection Status</div>
+          <div id="dashConnStatus" class="metric-val" style="color:#6EE7B7;">● Connected / Online</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">SafeLock Status</div>
+          <div id="dashSafeLockStatus" class="metric-val" style="color:#67E8F9;">🔒 Restricted / Active</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Authorized Schedule</div>
+          <div id="dashSchedSummary" class="metric-val" style="font-size:13px;">Mon–Fri 16:00–18:00</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4.6 Lock Now, 4.7 Direct Unlock, 4.8 Separate Requests Button -->
+    <section class="command-bar">
+      <button class="btn btn-lock" onclick="sendLockNowCommand()">🔒 Lock Now</button>
+      <button class="btn btn-unlock" onclick="sendDirectUnlockCommand()">🔓 Unlock Immediately</button>
+      <button class="btn btn-requests" onclick="openModal('requestsModal')">📬 Requests</button>
+    </section>
+
+    <!-- 4.9 Parent Application & Schedule Controls (No Wallpaper Control) -->
+    <div class="dashboard-columns">
+      <section class="card">
+        <h3>
+          <span>Approved Applications</span>
+          <span style="font-size:11px;color:var(--text-secondary);">Tap to Toggle</span>
+        </h3>
+        <div id="parentAppsList"></div>
+      </section>
+
+      <section class="card">
+        <h3>
+          <span>Authorized Schedule</span>
+          <span style="font-size:11px;color:var(--text-secondary);">Normal-Use Windows</span>
+        </h3>
+        <div id="parentScheduleList" style="margin-bottom:12px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <select id="newSchedDay" class="input">
+            <option value="MON-FRI">Mon–Fri</option>
+            <option value="SAT-SUN">Sat–Sun</option>
+            <option value="DAILY">Daily</option>
+          </select>
+          <input type="time" id="newSchedStart" value="16:00" class="input" />
+          <input type="time" id="newSchedEnd" value="18:00" class="input" />
+        </div>
+        <button class="btn btn-secondary" style="width:100%;" onclick="addAuthorizedScheduleSlot()">+ Add Authorized Schedule Slot</button>
+        <p style="font-size:11px;color:var(--text-secondary);margin-top:10px;">
+          Note: Student wallpaper customization is strictly student-controlled and omitted from Lock Monitor by policy.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <!-- 4.8 Separate Requests Modal -->
+  <div id="requestsModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="font-size:17px;">Student Requests</h2>
+        <button class="btn btn-secondary" style="padding:6px 12px;min-height:34px;" onclick="closeModal('requestsModal')">Close</button>
+      </div>
+      <div id="parentRequestsContainer"></div>
+    </div>
+  </div>
+
+  <!-- 5. Pairing Student Modal -->
+  <div id="pairStudentModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="font-size:17px;">Connect to a Student Device</h2>
+        <button class="btn btn-secondary" style="padding:6px 12px;min-height:34px;" onclick="closeModal('pairStudentModal')">Close</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+        Enter the Student ID shown on the student's SafeLock screen. Connection requires explicit student-side approval.
+      </p>
+      <input type="text" id="pairStudentIdInput" class="input" placeholder="Student ID (e.g., SL-C9M14)" />
+      <input type="text" id="pairStudentNameInput" class="input" placeholder="Student Name (e.g., Aarav Sharma)" />
+      <button class="btn btn-requests" style="width:100%;" onclick="submitPairingRequest()">Submit Pairing Request</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const PARENT_STORAGE_KEY = "lockmonitor_parent_demo_v1";
+
+    function generateParentId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const arr = new Uint8Array(5);
+      window.crypto.getRandomValues(arr);
+      let out = "LM-";
+      for (let i = 0; i < 5; i++) out += chars[arr[i] % chars.length];
+      return out;
+    }
+
+    async function sha256Hex(text) {
+      const data = new TextEncoder().encode(text);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    let state = JSON.parse(localStorage.getItem(PARENT_STORAGE_KEY) || "null") || {
+      registered: true,
+      parentName: "Alice Sharma",
+      parentId: generateParentId(),
+      recoveryEmail: "alice@example.com",
+      pinSalt: "lm_salt_v1",
+      // SHA-256("lm_salt_v1:1234") precomputed fallback or verified dynamically
+      pinPlainForDemoCheck: null,
+      pinVerifierHash: "",
+      failedAttempts: 0,
+      lockoutUntil: 0,
+      selectedStudentIndex: 0,
+      students: [
+        {
+          studentId: "SL-A7K92",
+          studentName: "Leo Sharma",
+          pairingStatus: "PAIRED",
+          connectionStatus: "ONLINE",
+          safeLockStatus: "Restricted / Active",
+          lastCommandState: "Last Command: Confirmed on Device",
+          schedules: ["MON-FRI 16:00–18:00", "SAT-SUN 14:00–18:00"],
+          apps: [
+            { id: "com.android.dialer", name: "Phone", approved: true },
+            { id: "com.android.contacts", name: "Contacts", approved: true },
+            { id: "com.android.camera2", name: "Camera", approved: true },
+            { id: "com.google.android.youtube", name: "YouTube", approved: true },
+            { id: "com.whatsapp", name: "WhatsApp", approved: false },
+            { id: "com.google.android.apps.maps", name: "Google Maps", approved: false }
+          ],
+          requests: [
+            {
+              id: "REQ-901",
+              type: "EMERGENCY_UNLOCK",
+              details: "Need unlocked phone at school gate for pickup coordination",
+              time: "08:15 PM",
+              status: "PENDING",
+              durationMinutes: 15
+            },
+            {
+              id: "REQ-902",
+              type: "APP_PERMISSION",
+              details: "Allow WhatsApp for Biology study group",
+              appId: "com.whatsapp",
+              time: "07:50 PM",
+              status: "PENDING",
+              durationMinutes: 0
+            },
+            {
+              id: "REQ-903",
+              type: "SCHEDULE_CHANGE",
+              details: "Propose WED 18:00–19:30 extra study break",
+              scheduleSlot: "WED 18:00–19:30",
+              time: "06:30 PM",
+              status: "PENDING",
+              durationMinutes: 0
+            }
+          ]
+        },
+        {
+          studentId: "SL-B8M41",
+          studentName: "Maya Sharma",
+          pairingStatus: "PAIRED",
+          connectionStatus: "ONLINE",
+          safeLockStatus: "Normal-Use Period",
+          lastCommandState: "Synchronized",
+          schedules: ["DAILY 17:00–19:00"],
+          apps: [
+            { id: "com.android.dialer", name: "Phone", approved: true },
+            { id: "com.android.contacts", name: "Contacts", approved: true },
+            { id: "com.google.android.youtube", name: "YouTube", approved: false },
+            { id: "com.whatsapp", name: "WhatsApp", approved: false }
+          ],
+          requests: []
+        }
+      ]
+    };
+
+    async function initDefaultPinHash() {
+      if (!state.pinVerifierHash) {
+        state.pinVerifierHash = await sha256Hex(state.pinSalt + ":1234");
+        saveState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(PARENT_STORAGE_KEY, JSON.stringify(state));
+      renderDashboard();
+    }
+
+    async function verifyParentPin() {
+      const now = Date.now();
+      const errEl = document.getElementById("pinErrorMsg");
+      if (now < state.lockoutUntil) {
+        const secs = Math.ceil((state.lockoutUntil - now) / 1000);
+        errEl.textContent = `Rate limit active: Too many failed attempts. Wait ${secs}s.`;
+        errEl.style.display = "block";
+        return;
+      }
+      const pin = document.getElementById("pinVerifyInput").value.trim();
+      const candidateHash = await sha256Hex(state.pinSalt + ":" + pin);
+      if (candidateHash === state.pinVerifierHash) {
+        state.failedAttempts = 0;
+        errEl.style.display = "none";
+        document.getElementById("pinVerifyInput").value = "";
+        document.getElementById("pinOverlay").classList.add("hidden");
+        saveState();
+      } else {
+        state.failedAttempts += 1;
+        if (state.failedAttempts >= 5) {
+          state.lockoutUntil = Date.now() + 30000;
+          errEl.textContent = "5 failed PIN attempts! Locked out for 30 seconds.";
+        } else {
+          errEl.textContent = `Incorrect PIN (${state.failedAttempts}/5 attempts).`;
+        }
+        errEl.style.display = "block";
+        saveState();
+      }
+    }
+
+    async function completeParentRegistration() {
+      const name = document.getElementById("regParentName").value.trim();
+      const email = document.getElementById("regRecoveryEmail").value.trim();
+      const pin = document.getElementById("regPinInput").value.trim();
+      if (!name || !email || pin.length < 4) {
+        showToast("Enter name, recovery email, and a 4–6 digit PIN.");
+        return;
+      }
+      state.parentName = name;
+      state.recoveryEmail = email;
+      state.parentId = generateParentId();
+      state.pinVerifierHash = await sha256Hex(state.pinSalt + ":" + pin);
+      state.registered = true;
+      document.getElementById("registerFields").style.display = "none";
+      document.getElementById("unlockFields").style.display = "block";
+      document.getElementById("pinOverlay").classList.add("hidden");
+      saveState();
+      showToast("Parent account registered & secured with SHA-256 PIN verifier.");
+    }
+
+    async function recoverPinWithEmail() {
+      const entered = prompt(`Enter your registered recovery email (${state.recoveryEmail}) to verify identity and reset PIN:`);
+      if (!entered) return;
+      if (entered.trim().toLowerCase() === state.recoveryEmail.toLowerCase()) {
+        const newPin = prompt("Identity verified! Enter a new 4–6 digit PIN:");
+        if (newPin && newPin.trim().length >= 4) {
+          state.pinVerifierHash = await sha256Hex(state.pinSalt + ":" + newPin.trim());
+          state.failedAttempts = 0;
+          state.lockoutUntil = 0;
+          saveState();
+          showToast("PIN reset successfully! Unlock with your new PIN.");
+        }
+      } else {
+        showToast("Recovery email did not match registered account.");
+      }
+    }
+
+    function lockParentApp() {
+      document.getElementById("pinOverlay").classList.remove("hidden");
+    }
+
+    function copyParentId() {
+      navigator.clipboard && navigator.clipboard.writeText(state.parentId);
+      showToast(`Copied Parent ID: ${state.parentId}`);
+    }
+
+    function currentStudent() {
+      return state.students[state.selectedStudentIndex] || state.students[0];
+    }
+
+    function toggleSimulatedOffline(isOffline) {
+      const s = currentStudent();
+      s.connectionStatus = isOffline ? "OFFLINE" : "ONLINE";
+      if (!isOffline && s.safeLockStatus === "Command Pending") {
+        s.safeLockStatus = s.queuedTargetStatus || "Restricted / Active";
+        s.lastCommandState = "Queued command synchronized & confirmed by device";
+      }
+      saveState();
+    }
+
+    function sendLockNowCommand() {
+      const s = currentStudent();
+      if (s.connectionStatus === "OFFLINE") {
+        s.safeLockStatus = "Command Pending";
+        s.queuedTargetStatus = "Restricted / Active";
+        s.lastCommandState = "⏳ Lock Now queued (Device Offline — awaiting confirmation)";
+        saveState();
+        showToast("Student phone is offline. Lock command queued as PENDING.");
+      } else {
+        s.safeLockStatus = "Restricted / Active";
+        s.lastCommandState = "✅ Lock Now confirmed by device (" + new Date().toLocaleTimeString() + ")";
+        saveState();
+        showToast(`Lock Now executed on ${s.studentName}'s phone.`);
+      }
+    }
+
+    function sendDirectUnlockCommand() {
+      const s = currentStudent();
+      if (s.connectionStatus === "OFFLINE") {
+        s.safeLockStatus = "Command Pending";
+        s.queuedTargetStatus = "Normal-Use Period (Unlocked until next schedule transition)";
+        s.lastCommandState = "⏳ Direct Unlock queued (Device Offline — awaiting confirmation)";
+        saveState();
+        showToast("Student phone is offline. Unlock command queued as PENDING.");
+      } else {
+        s.safeLockStatus = "Normal-Use Period (Unlocked until next schedule window)";
+        s.lastCommandState = "✅ Direct Unlock confirmed by device (" + new Date().toLocaleTimeString() + ")";
+        saveState();
+        showToast(`Immediate Unlock confirmed on ${s.studentName}'s phone.`);
+      }
+    }
+
+    function submitPairingRequest() {
+      const id = document.getElementById("pairStudentIdInput").value.trim().toUpperCase();
+      const name = document.getElementById("pairStudentNameInput").value.trim();
+      if (!id.startsWith("SL-") || !name) {
+        showToast("Enter a valid Student ID (SL-XXXXX) and Student Name.");
+        return;
+      }
+      state.students.push({
+        studentId: id,
+        studentName: name,
+        pairingStatus: "PENDING_APPROVAL",
+        connectionStatus: "SYNC_PENDING",
+        safeLockStatus: "Status Unknown (Awaiting Student Pairing Approval)",
+        lastCommandState: "Pairing request sent — waiting for student approval",
+        schedules: ["MON-FRI 16:00–18:00"],
+        apps: [
+          { id: "com.android.dialer", name: "Phone", approved: true },
+          { id: "com.android.contacts", name: "Contacts", approved: true }
+        ],
+        requests: []
+      });
+      state.selectedStudentIndex = state.students.length - 1;
+      closeModal("pairStudentModal");
+      saveState();
+      showToast(`Pairing request sent to ${id}. Awaiting student approval.`);
+    }
+
+    function addAuthorizedScheduleSlot() {
+      const s = currentStudent();
+      const day = document.getElementById("newSchedDay").value;
+      const start = document.getElementById("newSchedStart").value;
+      const end = document.getElementById("newSchedEnd").value;
+      if (!start || !end || start >= end) {
+        showToast("End time must be after start time.");
+        return;
+      }
+      s.schedules.push(`${day} ${start}–${end}`);
+      saveState();
+      showToast("Authorized schedule updated.");
+    }
+
+    function decideRequest(reqId, decision) {
+      const s = currentStudent();
+      const req = s.requests.find(r => r.id === reqId);
+      if (!req || req.status !== "PENDING") {
+        showToast("Request already processed (duplicate approval prevented).");
+        return;
+      }
+      req.status = decision;
+      if (decision === "APPROVED") {
+        if (req.type === "EMERGENCY_UNLOCK") {
+          const sel = document.getElementById("dur_" + reqId);
+          const mins = sel ? parseInt(sel.value, 10) : 15;
+          req.approvedDuration = mins;
+          s.safeLockStatus = `Emergency Unlocked (${mins} mins)`;
+          s.lastCommandState = `Emergency Unlock (${mins}m) confirmed`;
+        } else if (req.type === "APP_PERMISSION" && req.appId) {
+          const targetApp = s.apps.find(a => a.id === req.appId);
+          if (targetApp) targetApp.approved = true;
+        } else if (req.type === "SCHEDULE_CHANGE" && req.scheduleSlot) {
+          s.schedules.push(req.scheduleSlot);
+        }
+      }
+      saveState();
+      showToast(`Request ${req.id} ${decision}.`);
+    }
+
+    function renderDashboard() {
+      document.getElementById("parentNameLabel").textContent = state.parentName;
+      document.getElementById("parentIdLabel").textContent = state.parentId;
+
+      const tabs = document.getElementById("studentTabsContainer");
+      tabs.innerHTML = "";
+      state.students.forEach((st, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "student-tab" + (idx === state.selectedStudentIndex ? " active" : "");
+        btn.textContent = `👤 ${st.studentName} (${st.studentId})`;
+        btn.onclick = () => {
+          state.selectedStudentIndex = idx;
+          document.getElementById("offlineToggle").checked = (st.connectionStatus === "OFFLINE");
+          saveState();
+        };
+        tabs.appendChild(btn);
+      });
+
+      const s = currentStudent();
+      document.getElementById("dashStudentName").textContent = s.studentName;
+      document.getElementById("dashStudentId").textContent = `Student ID: ${s.studentId} • Pairing: ${s.pairingStatus}`;
+      document.getElementById("dashLastCommandBadge").textContent = s.lastCommandState;
+
+      const connEl = document.getElementById("dashConnStatus");
+      if (s.connectionStatus === "ONLINE") {
+        connEl.textContent = "● Connected / Online";
+        connEl.style.color = "#6EE7B7";
+      } else if (s.connectionStatus === "OFFLINE") {
+        connEl.textContent = "○ Disconnected / Offline (Status Stale)";
+        connEl.style.color = "#FDA4AF";
+      } else {
+        connEl.textContent = "◐ Synchronization Pending";
+        connEl.style.color = "#FCD34D";
+      }
+
+      document.getElementById("dashSafeLockStatus").textContent = s.safeLockStatus;
+      document.getElementById("dashSchedSummary").textContent = s.schedules.join(", ") || "Always Restricted";
+
+      // Approved Apps List
+      const appsContainer = document.getElementById("parentAppsList");
+      appsContainer.innerHTML = "";
+      s.apps.forEach(app => {
+        const row = document.createElement("div");
+        row.className = "app-row";
+        row.innerHTML = `
+          <span><strong>${app.name}</strong> <span style="font-size:11px;color:var(--text-secondary);">(${app.id})</span></span>
+          <button class="btn btn-secondary" style="padding:5px 12px;min-height:32px;background:${app.approved ? 'rgba(16,185,129,0.2)' : 'rgba(244,63,94,0.15)'};color:${app.approved ? '#6EE7B7' : '#FDA4AF'};">
+            ${app.approved ? "Approved ✓" : "Disallowed ✕"}
+          </button>
+        `;
+        row.querySelector("button").onclick = () => {
+          app.approved = !app.approved;
+          saveState();
+        };
+        appsContainer.appendChild(row);
+      });
+
+      // Authorized Schedule List
+      const schedContainer = document.getElementById("parentScheduleList");
+      schedContainer.innerHTML = "";
+      s.schedules.forEach((slot, idx) => {
+        const row = document.createElement("div");
+        row.className = "sched-row";
+        row.innerHTML = `
+          <span>🕒 ${slot}</span>
+          <button class="btn btn-secondary" style="padding:4px 10px;min-height:28px;font-size:11px;">Remove</button>
+        `;
+        row.querySelector("button").onclick = () => {
+          s.schedules.splice(idx, 1);
+          saveState();
+        };
+        schedContainer.appendChild(row);
+      });
+
+      // Requests Modal Content (Separate Requests view)
+      const reqBox = document.getElementById("parentRequestsContainer");
+      reqBox.innerHTML = "";
+      if (s.requests.length === 0) {
+        reqBox.innerHTML = `<p style="font-size:13px;color:var(--text-secondary);">No requests from ${s.studentName}.</p>`;
+      } else {
+        s.requests.forEach(r => {
+          const card = document.createElement("div");
+          card.className = "req-card";
+          const isPending = r.status === "PENDING";
+          card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <strong>${s.studentName} — ${r.type.replace("_", " ")}</strong>
+              <span style="font-size:11px;font-weight:700;color:${r.status === 'PENDING' ? '#FCD34D' : r.status === 'APPROVED' ? '#6EE7B7' : '#FDA4AF'};">${r.status}</span>
+            </div>
+            <div style="font-size:13px;margin-bottom:6px;">${r.details}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Submitted: ${r.time}</div>
+            ${isPending && r.type === "EMERGENCY_UNLOCK" ? `
+              <div style="margin-bottom:10px;">
+                <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:4px;">Select Emergency Unlock Duration:</label>
+                <select id="dur_${r.id}" class="input" style="margin-bottom:0;">
+                  <option value="5">5 minutes</option>
+                  <option value="15" selected>15 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="60">Custom: 60 minutes</option>
+                </select>
+              </div>
+            ` : ""}
+            ${isPending ? `
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-unlock" style="flex:1;min-height:38px;padding:8px;" onclick="decideRequest('${r.id}', 'APPROVED')">Approve</button>
+                <button class="btn btn-lock" style="flex:1;min-height:38px;padding:8px;" onclick="decideRequest('${r.id}', 'REJECTED')">Reject</button>
+              </div>
+            ` : ""}
+          `;
+          reqBox.appendChild(card);
+        });
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__lmToast);
+      window.__lmToast = setTimeout(() => { t.style.display = "none"; }, 3200);
+    }
+
+    initDefaultPinHash();
+    renderDashboard();
+  </script>
+</body>
+</html>

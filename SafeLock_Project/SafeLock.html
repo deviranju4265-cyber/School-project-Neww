@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SafeLock — Student Application (Prototype)</title>
+  <style>
+    :root {
+      --bg-primary: #090D16;
+      --bg-card: rgba(17, 25, 40, 0.82);
+      --bg-card-solid: #111928;
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #06B6D4;
+      --accent-blue: #3B82F6;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-rose: #F43F5E;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: radial-gradient(circle at 50% 15%, #162647 0%, #090D16 70%);
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      transition: background 0.35s ease;
+    }
+    .prototype-banner {
+      background: rgba(15, 23, 42, 0.92);
+      border-bottom: 1px solid rgba(6, 182, 212, 0.35);
+      padding: 6px 14px;
+      font-size: 11px;
+      color: #67E8F9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 20;
+    }
+    .prototype-banner span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .app-shell {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 18px 18px 28px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(2px);
+    }
+    /* Header: Logo & App Name */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      background: #0B1120;
+    }
+    .brand-title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+    }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(6, 182, 212, 0.16);
+      color: #67E8F9;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+    .status-pill.normal {
+      background: rgba(16, 185, 129, 0.16);
+      color: #6EE7B7;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    /* Digital Clock (No next-schedule countdown on main screen) */
+    .clock-section {
+      text-align: center;
+      margin: 26px 0 20px;
+      padding: 18px 12px;
+      background: rgba(9, 13, 22, 0.45);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(8px);
+    }
+    .digital-clock {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #FFFFFF;
+      text-shadow: 0 4px 20px rgba(6, 182, 212, 0.35);
+    }
+    .student-badge {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    /* Responsive Approved App Grid */
+    .apps-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 8px 0 18px;
+    }
+    .section-caption {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 14px;
+      width: 100%;
+    }
+    .app-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 16px 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+      min-height: 98px;
+      text-decoration: none;
+      color: var(--text-main);
+      backdrop-filter: blur(12px);
+    }
+    .app-tile:hover, .app-tile:active {
+      transform: translateY(-2px) scale(1.02);
+      border-color: var(--accent-cyan);
+      background: rgba(30, 41, 59, 0.9);
+    }
+    .app-icon-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+    }
+    .app-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    /* Bottom Action Dock */
+    .bottom-dock {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 10px;
+      backdrop-filter: blur(16px);
+    }
+    .dock-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-radius: 14px;
+      padding: 10px 6px;
+      min-height: 52px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .dock-btn:hover {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--accent-cyan);
+    }
+    .dock-btn.emergency {
+      background: rgba(244, 63, 94, 0.16);
+      border-color: rgba(244, 63, 94, 0.45);
+      color: #FDA4AF;
+    }
+    /* Modals / Drawers */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+      padding: 12px;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-sheet {
+      width: 100%;
+      max-width: 480px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border-glass);
+      border-radius: 24px;
+      padding: 20px;
+      color: var(--text-main);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .modal-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-main);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      background: #090D16;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 14px;
+    }
+    .id-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: #67E8F9;
+    }
+    .btn {
+      padding: 11px 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+      min-height: 44px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: #fff;
+      width: 100%;
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+    .btn-danger {
+      background: var(--accent-rose);
+      color: #fff;
+      width: 100%;
+    }
+    .wallpaper-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .wp-option {
+      height: 74px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      background-size: cover;
+      background-position: center;
+    }
+    .wp-option.selected {
+      border-color: var(--accent-cyan);
+    }
+    .wp-preview-box {
+      height: 120px;
+      border-radius: 16px;
+      border: 1px solid var(--border-glass);
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-size: cover;
+      background-position: center;
+    }
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip.active {
+      background: rgba(6, 182, 212, 0.22);
+      border-color: var(--accent-cyan);
+      color: #67E8F9;
+    }
+    .req-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge.PENDING { background: rgba(245, 158, 11, 0.2); color: #FCD34D; }
+    .badge.APPROVED { background: rgba(16, 185, 129, 0.2); color: #6EE7B7; }
+    .badge.REJECTED { background: rgba(244, 63, 94, 0.2); color: #FDA4AF; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0F172A;
+      border: 1px solid var(--accent-cyan);
+      color: #F8FAFC;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">
+    <span>🛡️ <strong>HTML Prototype (Demo Only):</strong> Local browser storage. Native Android app enforces OS LockTask &amp; Firestore sync.</span>
+    <a href="tel:112" style="color:#FDA4AF;font-weight:700;text-decoration:none;">📞 SOS 112</a>
+  </div>
+
+  <main class="app-shell">
+    <!-- 3.1 Top Header: App Logo + App Name: SafeLock -->
+    <header class="top-header">
+      <div class="brand-row">
+        <img src="img.png" alt="SafeLock Logo" class="brand-logo" onerror="this.style.background='#06B6D4'" />
+        <div>
+          <div class="brand-title">SafeLock</div>
+          <div style="font-size:11px;color:var(--text-muted);" id="headerStudentId">ID: SL-A7K92</div>
+        </div>
+      </div>
+      <div id="restrictionBadge" class="status-pill">Restricted Mode</div>
+    </header>
+
+    <!-- 3.1 Below Header: Digital Clock (No next-schedule countdown on main screen) -->
+    <section class="clock-section" aria-label="Current Time">
+      <div id="digitalClock" class="digital-clock">08:30 PM</div>
+      <div id="studentGreeting" class="student-badge">Student: Leo Sharma • Paired with Parent</div>
+    </section>
+
+    <!-- 3.2 & 3.3 Responsive Approved Applications Grid -->
+    <section class="apps-container">
+      <div class="section-caption">
+        <span>Parent-Approved Applications</span>
+        <span id="approvedCountLabel">4 Apps</span>
+      </div>
+      <div id="approvedAppsGrid" class="app-grid"></div>
+    </section>
+
+    <!-- Minimal Bottom Controls -->
+    <nav class="bottom-dock" aria-label="SafeLock Controls">
+      <button class="dock-btn" onclick="openModal('wallpaperModal')">
+        <span>🖼️</span>
+        <span>Wallpaper</span>
+      </button>
+      <button class="dock-btn" onclick="openModal('requestsModal')">
+        <span>✉️</span>
+        <span>Requests</span>
+      </button>
+      <button class="dock-btn" onclick="openModal('setupModal')">
+        <span>⚙️</span>
+        <span>Setup &amp; ID</span>
+      </button>
+      <button class="dock-btn emergency" onclick="openModal('emergencyModal')">
+        <span>🚨</span>
+        <span>Emergency</span>
+      </button>
+    </nav>
+  </main>
+
+  <!-- 3.4 Wallpaper Selection Modal (Student-Controlled Only) -->
+  <div id="wallpaperModal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2>Student Wallpaper Customization</h2>
+        <button class="close-btn" onclick="closeModal('wallpaperModal')">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        Only you (the student) control your SafeLock wallpaper. Lock Monitor cannot alter your wallpaper.
+      </p>
+      <div class="wallpaper-grid" id="builtinWallpapers"></div>
+      <div class="form-group">
+        <label for="galleryInput">Or Select Photo from Device Gallery</label>
+        <input type="file" id="galleryInput" accept="image/*" class="input" onchange="previewGalleryWallpaper(event)" />
+      </div>
+      <div class="form-group">
+        <label>Preview Before Applying</label>
+        <div id="wallpaperPreview" class="wp-preview-box">
+          <div style="font-weight:700;font-size:20px;">08:30 PM</div>
+          <div style="font-size:11px;color:#cbd5e1;">SafeLock Preview</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSelectedWallpaper()">Save &amp; Apply Wallpaper</button>
+    </div>
+  </div>
+
+  <!-- 3.5 First-Time Setup & Pairing Modal -->
+  <div id="setupModal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2>Student Setup, Schedule &amp; Pairing</h2>
+        <button class="close-btn" onclick="closeModal('setupModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label for="studentNameInput">Student Name</label>
+        <input type="text" id="studentNameInput" class="input" placeholder="Enter your name" />
+      </div>
+      <div class="form-group">
+        <label>Unique Student ID (Auto-Generated per Installation)</label>
+        <div class="id-box">
+          <span id="setupStudentIdText">SL-A7K92</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary" style="padding:6px 10px;min-height:32px;" onclick="copyStudentId()">Copy ID</button>
+            <button class="btn btn-secondary" style="padding:6px 10px;min-height:32px;" onclick="regenerateStudentId()">New Install ID</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Propose Allowed Normal-Use Schedule (Submitted for Parent Approval)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          <select id="schedDay">
+            <option value="MON-FRI">Mon–Fri</option>
+            <option value="SAT-SUN">Sat–Sun</option>
+            <option value="DAILY">Every Day</option>
+          </select>
+          <input type="time" id="schedStart" value="16:00" class="input" />
+          <input type="time" id="schedEnd" value="18:00" class="input" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Request Applications for Parent Approval (Does NOT auto-approve)</label>
+        <div id="setupAppsChips" class="chip-list"></div>
+      </div>
+      <div class="form-group" style="background:rgba(59,130,246,0.1);padding:12px;border-radius:12px;border:1px solid rgba(59,130,246,0.3);">
+        <label style="color:#93C5FD;">Parent Connection Authorization</label>
+        <div id="pairingStatusBox" style="font-size:12px;margin-bottom:8px;">Paired with Parent ID: LM-P4D81</div>
+        <button class="btn btn-secondary" style="width:100%;" onclick="approveSimulatedParentPairing()">Approve Pending Parent Request (Demo)</button>
+      </div>
+      <button class="btn btn-primary" onclick="saveStudentSetup()">Save Setup &amp; Submit Proposals to Parent</button>
+    </div>
+  </div>
+
+  <!-- 3.7 Requests to the Parent Modal -->
+  <div id="requestsModal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2>Requests to Parent</h2>
+        <button class="close-btn" onclick="closeModal('requestsModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label for="reqTypeSelect">Request Type</label>
+        <select id="reqTypeSelect" class="input">
+          <option value="APP_PERMISSION">Application Permission Request</option>
+          <option value="SCHEDULE_CHANGE">Schedule-Change Request</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="reqDetailsInput">Request Details (e.g., App Name or Proposed Day/Time)</label>
+        <input type="text" id="reqDetailsInput" class="input" placeholder="e.g., Allow WhatsApp for study group or Tue 17:00-18:30" />
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:16px;" onclick="submitParentRequest()">Submit Request (Pending Parent Approval)</button>
+
+      <div class="section-caption">
+        <span>Submitted Requests History</span>
+        <button class="btn btn-secondary" style="padding:4px 8px;min-height:26px;font-size:10px;" onclick="simulateParentApprovalInDemo()">Simulate Parent Approval (Demo)</button>
+      </div>
+      <div id="requestsListContainer"></div>
+    </div>
+  </div>
+
+  <!-- 3.8 Emergency Unlock Request & Emergency Dialer Modal -->
+  <div id="emergencyModal" class="modal-backdrop">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h2>Emergency Access &amp; Calling</h2>
+        <button class="close-btn" onclick="closeModal('emergencyModal')">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+        Emergency calling is ALWAYS accessible regardless of SafeLock restriction state.
+      </p>
+      <a href="tel:112" class="btn btn-danger" style="display:block;text-align:center;text-decoration:none;margin-bottom:16px;">
+        📞 Call Emergency Services (112 / 911)
+      </a>
+      <div class="form-group">
+        <label for="emergencyReason">Request Emergency Temporary Unlock from Parent</label>
+        <textarea id="emergencyReason" rows="2" class="input" placeholder="Explain the emergency so your parent can approve an unlock duration..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="submitEmergencyUnlockRequest()">Send Emergency Unlock Request</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const STORAGE_KEY = "safelock_student_demo_v1";
+    const BUILTIN_WALLPAPERS = [
+      { id: "aurora", name: "Midnight Aurora", css: "radial-gradient(circle at 50% 15%, #0E3A53 0%, #090D16 72%)" },
+      { id: "cyber", name: "Cyber Indigo", css: "linear-gradient(145deg, #1E1B4B 0%, #090D16 65%, #064E3B 100%)" },
+      { id: "obsidian", name: "Deep Obsidian", css: "radial-gradient(circle at 80% 20%, #1E293B 0%, #050811 80%)" },
+      { id: "sunset", name: "Crimson Dusk", css: "linear-gradient(160deg, #3B0764 0%, #090D16 60%, #4C0519 100%)" }
+    ];
+
+    const ALL_INSTALLED_APPS = [
+      { id: "com.android.dialer", name: "Phone", icon: "📞", color: "#10B981", uri: "tel:", approvedDefault: true },
+      { id: "com.android.contacts", name: "Contacts", icon: "👥", color: "#3B82F6", uri: "intent://contacts#Intent;scheme=content;end", approvedDefault: true },
+      { id: "com.android.camera2", name: "Camera", icon: "📷", color: "#6366F1", uri: "intent://camera#Intent;end", approvedDefault: true },
+      { id: "com.google.android.youtube", name: "YouTube", icon: "▶️", color: "#EF4444", uri: "https://www.youtube.com", approvedDefault: true },
+      { id: "com.whatsapp", name: "WhatsApp", icon: "💬", color: "#22C55E", uri: "https://wa.me", approvedDefault: false },
+      { id: "com.google.android.apps.maps", name: "Maps", icon: "🗺️", color: "#F59E0B", uri: "https://maps.google.com", approvedDefault: false }
+    ];
+
+    function generateSecureStudentId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const arr = new Uint8Array(5);
+      window.crypto.getRandomValues(arr);
+      let code = "SL-";
+      for (let i = 0; i < 5; i++) code += chars[arr[i] % chars.length];
+      return code;
+    }
+
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || {
+      studentName: "Leo Sharma",
+      studentId: generateSecureStudentId(),
+      pairedParentId: "LM-P4D81",
+      pairingStatus: "PAIRED",
+      restrictionMode: "RESTRICTED",
+      wallpaperCss: BUILTIN_WALLPAPERS[0].css,
+      approvedAppIds: ["com.android.dialer", "com.android.contacts", "com.android.camera2", "com.google.android.youtube"],
+      proposedAppIds: ["com.whatsapp"],
+      authorizedSchedule: "MON-FRI 16:00 - 18:00",
+      proposedSchedule: "MON-FRI 16:00 - 18:00",
+      requests: [
+        {
+          id: "REQ-101",
+          type: "APP_PERMISSION",
+          details: "Requesting WhatsApp for class study group",
+          time: "07:45 PM",
+          status: "PENDING"
+        }
+      ]
+    };
+
+    let pendingWallpaperCss = state.wallpaperCss;
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    function updateDigitalClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      const formatted = `${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
+      document.getElementById("digitalClock").textContent = formatted;
+    }
+
+    function renderAll() {
+      document.body.style.background = state.wallpaperCss;
+      document.getElementById("headerStudentId").textContent = `ID: ${state.studentId}`;
+      document.getElementById("setupStudentIdText").textContent = state.studentId;
+      document.getElementById("studentNameInput").value = state.studentName;
+      document.getElementById("studentGreeting").textContent =
+        `Student: ${state.studentName} • ${state.pairingStatus === "PAIRED" ? "Paired (" + state.pairedParentId + ")" : "Unpaired"}`;
+
+      const badge = document.getElementById("restrictionBadge");
+      badge.textContent = state.restrictionMode === "RESTRICTED" ? "Restricted Mode" : "Normal-Use Window";
+      badge.className = "status-pill" + (state.restrictionMode === "RESTRICTED" ? "" : " normal");
+
+      // Render Approved Apps only
+      const grid = document.getElementById("approvedAppsGrid");
+      grid.innerHTML = "";
+      const approvedList = ALL_INSTALLED_APPS.filter(a => state.approvedAppIds.includes(a.id));
+      document.getElementById("approvedCountLabel").textContent = `${approvedList.length} Approved`;
+      approvedList.forEach(app => {
+        const tile = document.createElement("a");
+        tile.className = "app-tile";
+        tile.href = app.uri;
+        tile.onclick = (e) => {
+          showToast(`Launching real Android intent for ${app.name}...`);
+        };
+        tile.innerHTML = `
+          <div class="app-icon-circle" style="background:${app.color}">${app.icon}</div>
+          <div class="app-label">${app.name}</div>
+        `;
+        grid.appendChild(tile);
+      });
+
+      // Render Wallpaper Picker
+      const wpGrid = document.getElementById("builtinWallpapers");
+      wpGrid.innerHTML = "";
+      BUILTIN_WALLPAPERS.forEach(wp => {
+        const div = document.createElement("div");
+        div.className = "wp-option" + (pendingWallpaperCss === wp.css ? " selected" : "");
+        div.style.background = wp.css;
+        div.textContent = wp.name;
+        div.onclick = () => {
+          pendingWallpaperCss = wp.css;
+          document.getElementById("wallpaperPreview").style.background = pendingWallpaperCss;
+          renderAll();
+        };
+        wpGrid.appendChild(div);
+      });
+      document.getElementById("wallpaperPreview").style.background = pendingWallpaperCss;
+
+      // Render Setup App Proposal Chips
+      const chips = document.getElementById("setupAppsChips");
+      chips.innerHTML = "";
+      ALL_INSTALLED_APPS.forEach(app => {
+        const c = document.createElement("div");
+        const isSelected = state.proposedAppIds.includes(app.id) || state.approvedAppIds.includes(app.id);
+        c.className = "chip" + (isSelected ? " active" : "");
+        c.textContent = `${app.icon} ${app.name} ${state.approvedAppIds.includes(app.id) ? "(Approved)" : "(Request)"}`;
+        c.onclick = () => {
+          if (state.proposedAppIds.includes(app.id)) {
+            state.proposedAppIds = state.proposedAppIds.filter(id => id !== app.id);
+          } else {
+            state.proposedAppIds.push(app.id);
+          }
+          renderAll();
+        };
+        chips.appendChild(c);
+      });
+
+      // Render Requests History
+      const reqContainer = document.getElementById("requestsListContainer");
+      reqContainer.innerHTML = "";
+      state.requests.slice().reverse().forEach(r => {
+        const item = document.createElement("div");
+        item.className = "req-item";
+        item.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <strong>${r.type.replace("_", " ")}</strong>
+            <span class="badge ${r.status}">${r.status}</span>
+          </div>
+          <div style="color:#cbd5e1;margin-bottom:4px;">${r.details}</div>
+          <div style="font-size:10px;color:var(--text-muted);">Student ID: ${state.studentId} • Submitted: ${r.time}</div>
+        `;
+        reqContainer.appendChild(item);
+      });
+    }
+
+    function previewGalleryWallpaper(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        pendingWallpaperCss = `linear-gradient(rgba(9,13,22,0.45), rgba(9,13,22,0.65)), url('${e.target.result}') center/cover no-repeat`;
+        document.getElementById("wallpaperPreview").style.background = pendingWallpaperCss;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveSelectedWallpaper() {
+      state.wallpaperCss = pendingWallpaperCss;
+      saveState();
+      closeModal("wallpaperModal");
+      showToast("Wallpaper saved locally (Student-controlled only).");
+    }
+
+    function copyStudentId() {
+      navigator.clipboard && navigator.clipboard.writeText(state.studentId);
+      showToast(`Copied Student ID: ${state.studentId}`);
+    }
+
+    function regenerateStudentId() {
+      state.studentId = generateSecureStudentId();
+      state.pairingStatus = "UNPAIRED";
+      state.pairedParentId = "";
+      saveState();
+      showToast(`New installation Student ID generated: ${state.studentId}. Parent must re-pair.`);
+    }
+
+    function approveSimulatedParentPairing() {
+      state.pairingStatus = "PAIRED";
+      state.pairedParentId = "LM-P4D81";
+      document.getElementById("pairingStatusBox").textContent = `Paired with Parent ID: ${state.pairedParentId}`;
+      saveState();
+      showToast("Parent pairing request approved!");
+    }
+
+    function saveStudentSetup() {
+      const nameVal = document.getElementById("studentNameInput").value.trim();
+      if (!nameVal) {
+        showToast("Please enter your student name.");
+        return;
+      }
+      state.studentName = nameVal;
+      const day = document.getElementById("schedDay").value;
+      const start = document.getElementById("schedStart").value;
+      const end = document.getElementById("schedEnd").value;
+      state.proposedSchedule = `${day} ${start} - ${end}`;
+      state.requests.push({
+        id: "REQ-" + Math.floor(100 + Math.random() * 900),
+        type: "SCHEDULE_CHANGE",
+        details: `Initial setup schedule (${state.proposedSchedule}) & requested apps submitted for parent approval`,
+        time: document.getElementById("digitalClock").textContent,
+        status: "PENDING"
+      });
+      saveState();
+      closeModal("setupModal");
+      showToast("Setup saved! Schedule & app requests submitted for parent approval.");
+    }
+
+    function submitParentRequest() {
+      const type = document.getElementById("reqTypeSelect").value;
+      const details = document.getElementById("reqDetailsInput").value.trim();
+      if (!details) {
+        showToast("Please enter request details.");
+        return;
+      }
+      state.requests.push({
+        id: "REQ-" + Math.floor(100 + Math.random() * 900),
+        type,
+        details,
+        time: document.getElementById("digitalClock").textContent,
+        status: "PENDING"
+      });
+      document.getElementById("reqDetailsInput").value = "";
+      saveState();
+      showToast("Request submitted (Status: PENDING parent approval).");
+    }
+
+    function submitEmergencyUnlockRequest() {
+      const reason = document.getElementById("emergencyReason").value.trim();
+      if (!reason) {
+        showToast("Please enter the emergency reason.");
+        return;
+      }
+      state.requests.push({
+        id: "REQ-" + Math.floor(100 + Math.random() * 900),
+        type: "EMERGENCY_UNLOCK",
+        details: `Emergency Unlock: ${reason}`,
+        time: document.getElementById("digitalClock").textContent,
+        status: "PENDING"
+      });
+      document.getElementById("emergencyReason").value = "";
+      saveState();
+      closeModal("emergencyModal");
+      showToast("Emergency unlock request sent to parent (Pending approval).");
+    }
+
+    function simulateParentApprovalInDemo() {
+      let updated = false;
+      state.requests.forEach(r => {
+        if (r.status === "PENDING") {
+          r.status = "APPROVED";
+          updated = true;
+          if (r.type === "APP_PERMISSION" && !state.approvedAppIds.includes("com.whatsapp")) {
+            state.approvedAppIds.push("com.whatsapp");
+          }
+        }
+      });
+      saveState();
+      showToast(updated ? "Simulated parent approval applied in demo!" : "No pending requests to approve.");
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { t.style.display = "none"; }, 3200);
+    }
+
+    updateDigitalClock();
+    setInterval(updateDigitalClock, 1000);
+    renderAll();
+  </script>
+</body>
+</html>
